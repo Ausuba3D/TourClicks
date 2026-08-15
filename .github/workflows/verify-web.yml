@@ -1,0 +1,51 @@
+name: Verify TourClicks Web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify public release source
+        run: python tools/verify_release.py
+
+      - name: Build PWA
+        run: python web/build_site.py
+
+      - name: Validate PWA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f _site/index.html
+          test -f _site/manifest.webmanifest
+          test -f _site/sw.js
+          test -f _site/browser-compatibility.js
+          test -f _site/icons/tourclicks-icon.png
+          node --check _site/browser-compatibility.js
+          node --check _site/sw.js
+          python -m json.tool _site/manifest.webmanifest >/dev/null
+          python -m json.tool _site/build-info.json >/dev/null
+          grep -q '<h1>TourClicks</h1>' _site/index.html
+          grep -q 'Compare with TourClicks' _site/index.html
+          grep -q 'Small clock variance' _site/index.html
+          grep -q 'Personal offset ET' _site/index.html
+          grep -q 'https://github.com/Ausuba3D/TourClicks' _site/index.html
+          ! grep -q 'https://github.com/Ausuba3D/Janus' _site/index.html
+
+      - name: Upload verified PWA
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourclicks-web-1.0.0
+          path: _site/
+          if-no-files-found: error

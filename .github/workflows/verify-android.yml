@@ -1,0 +1,71 @@
+name: Verify TourClicks Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify public release source
+        run: python tools/verify_release.py
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Compile release APK
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Verify APK metadata and payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release-unsigned.apk
+          if [ ! -f "$APK" ]; then APK=app/build/outputs/apk/release/app-release.apk; fi
+          test -f "$APK"
+          mkdir -p dist
+          cp "$APK" dist/TourClicks-1.0.0-unsigned.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee dist/APK-METADATA.txt
+          grep -q "package: name='com.ausuba3d.tourclicks' versionCode='1' versionName='1.0.0'" dist/APK-METADATA.txt
+          grep -q "application-label:'TourClicks'" dist/APK-METADATA.txt
+          unzip -p "$APK" assets/index.html | grep -q '<h1>TourClicks</h1>'
+          unzip -p "$APK" assets/index.html | grep -q 'Small clock variance'
+          unzip -p "$APK" assets/index.html | grep -q 'Personal offset ET'
+          unzip -p "$APK" assets/index.html | grep -q 'TourClicks Timeline date selector contrast and direct date picker'
+          unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/TourClicks'
+          ! unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/Janus'
+          sha256sum dist/TourClicks-1.0.0-unsigned.apk | tee dist/SHA256SUMS.txt
+
+      - name: Upload verified unsigned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourclicks-1.0.0-unsigned
+          path: |
+            dist/TourClicks-1.0.0-unsigned.apk
+            dist/APK-METADATA.txt
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
