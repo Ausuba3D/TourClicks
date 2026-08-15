@@ -19,6 +19,8 @@ import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.util.Base64;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
@@ -57,15 +59,29 @@ public final class MainActivity extends Activity {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        webView = new WebView(this);
-        webView.setClipToPadding(true);
-        ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
-            Insets bars = windowInsets.getInsets(
-                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return windowInsets;
-        });
-        webView.setBackgroundColor(Color.rgb(246, 247, 251));
+        FrameLayout root = new FrameLayout(this);
+root.setLayoutParams(new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT));
+
+webView = new WebView(this);
+FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT);
+root.addView(webView, webParams);
+
+ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+    Insets bars = windowInsets.getInsets(
+            WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+    FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) webView.getLayoutParams();
+    params.leftMargin = bars.left;
+    params.topMargin = bars.top;
+    params.rightMargin = bars.right;
+    params.bottomMargin = bars.bottom;
+    webView.setLayoutParams(params);
+    return WindowInsetsCompat.CONSUMED;
+});
+webView.setBackgroundColor(Color.rgb(246, 247, 251));
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -128,7 +144,8 @@ public final class MainActivity extends Activity {
             }
         });
 
-        setContentView(webView);
+        setContentView(root);
+        ViewCompat.requestApplyInsets(root);
         webView.loadUrl("file:///android_asset/index.html");
     }
 
