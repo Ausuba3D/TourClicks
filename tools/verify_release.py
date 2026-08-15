@@ -18,8 +18,8 @@ build = BUILD.read_text(encoding='utf-8')
 for marker in [
     "namespace 'com.ausuba3d.tourclicks'",
     "applicationId 'com.ausuba3d.tourclicks'",
-    'versionCode 1',
-    "versionName '1.0.0'",
+    'versionCode 2',
+    "versionName '1.0.1'",
 ]:
     if marker not in build:
         raise SystemExit(f'Missing Android release marker: {marker}')
@@ -77,6 +77,6 @@ width, height = struct.unpack('>II', raw[16:24])
 if (width, height) != (192, 192):
     raise SystemExit(f'Unexpected TourClicks icon size: {width}x{height}')
 
-print('TourClicks 1.0.0 public release source verification passed.')
+print('TourClicks 1.0.1 public release source verification passed.')
 print(f'Icon: {width}x{height}')
 print('Package: com.ausuba3d.tourclicks')

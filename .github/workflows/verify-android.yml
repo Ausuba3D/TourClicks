@@ -48,9 +48,9 @@ jobs:
           if [ ! -f "$APK" ]; then APK=app/build/outputs/apk/release/app-release.apk; fi
           test -f "$APK"
           mkdir -p dist
-          cp "$APK" dist/TourClicks-1.0.0-unsigned.apk
+          cp "$APK" dist/TourClicks-1.0.1-unsigned.apk
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee dist/APK-METADATA.txt
-          grep -q "package: name='com.ausuba3d.tourclicks' versionCode='1' versionName='1.0.0'" dist/APK-METADATA.txt
+          grep -q "package: name='com.ausuba3d.tourclicks' versionCode='2' versionName='1.0.1'" dist/APK-METADATA.txt
           grep -q "application-label:'TourClicks'" dist/APK-METADATA.txt
           unzip -p "$APK" assets/index.html | grep -q '<h1>TourClicks</h1>'
           unzip -p "$APK" assets/index.html | grep -q 'Small clock variance'
@@ -58,14 +58,14 @@ jobs:
           unzip -p "$APK" assets/index.html | grep -q 'TourClicks Timeline date selector contrast and direct date picker'
           unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/TourClicks'
           ! unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/Janus'
-          sha256sum dist/TourClicks-1.0.0-unsigned.apk | tee dist/SHA256SUMS.txt
+          sha256sum dist/TourClicks-1.0.1-unsigned.apk | tee dist/SHA256SUMS.txt
 
       - name: Upload verified unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: tourclicks-1.0.0-unsigned
+          name: tourclicks-1.0.1-unsigned
           path: |
-            dist/TourClicks-1.0.0-unsigned.apk
+            dist/TourClicks-1.0.1-unsigned.apk
             dist/APK-METADATA.txt
             dist/SHA256SUMS.txt
           if-no-files-found: error

@@ -10,11 +10,13 @@ It is an independent Ausuba3D project. TourClicks is not affiliated with or endo
 
 ## Release
 
-Current stable release: `1.0.0`
+Current releases:
 
-- Android APK: [TourClicks 1.0.0 - Android APK](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.0-android)
+- Android APK: [TourClicks 1.0.1 - Android APK](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.1-android)
 - Web / PWA package: [TourClicks 1.0.0 - Web / PWA](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.0-web)
 - Android package: `com.ausuba3d.tourclicks`
+
+Android 1.0.1 is a compatibility hotfix that keeps TourClicks clear of Android status bars, display cutouts, gesture areas, and three-button navigation bars on devices with different system-bar insets.
 
 ## Highlights
 
@@ -43,7 +45,7 @@ TourClicks 1.0 uses a new public-release application identity and signing key. E
 
 ## Web app
 
-The verified Web/PWA package is available from the Web release above. The repository also includes a GitHub Pages deployment workflow for the hosted browser version.
+The verified Web/PWA package is available from the Web release above. The hosted browser version is deployed with GitHub Pages from the verified web build workflow.
 
 Browser limitations are documented in `web/ANDROID-ONLY-FEATURES.md`.
 
