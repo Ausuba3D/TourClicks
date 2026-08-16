@@ -33,6 +33,15 @@ Android 1.0.1 is a compatibility hotfix that keeps TourClicks clear of Android s
 - Installable offline-capable browser PWA
 - C5 teal-and-amber interface
 
+## Tutorials and user guides
+
+New users should begin with the setup guide before entering daily records.
+
+- [Setup and First Use Guide (PDF)](docs/tutorials/TourClicks-Setup-and-First-Use-Guide.pdf) - configure the weekly schedule, pay-period anchor and dates, starting leave balances, FMLA cases, a first test record, and backups
+- [Daily Use Guide (PDF)](docs/tutorials/TourClicks-Daily-Use-Guide.pdf) - use Today, BT, OL, IL, ET, Timeline, Calendar, Calculator, leave and FMLA, reports, OCR comparison, and backups
+- [Tutorial folder and editable Word versions](docs/tutorials/)
+- [Open the hosted TourClicks app](https://ausuba3d.github.io/TourClicks/)
+
 ## Privacy and data
 
 TourClicks is local-first. Records are stored on the device/browser where they are created. Android and web do not automatically synchronize.
