@@ -12,11 +12,11 @@ It is an independent Ausuba3D project. TourClicks is not affiliated with or endo
 
 Current releases:
 
-- Android APK: [TourClicks 1.0.1 - Android APK](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.1-android)
+- Android APK: [TourClicks 1.0.2 - Android APK](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.2-android)
 - Web / PWA package: [TourClicks 1.0.0 - Web / PWA](https://github.com/Ausuba3D/TourClicks/releases/tag/v1.0.0-web)
 - Android package: `com.ausuba3d.tourclicks`
 
-Android 1.0.1 is a compatibility hotfix that keeps TourClicks clear of Android status bars, display cutouts, gesture areas, and three-button navigation bars on devices with different system-bar insets.
+Android 1.0.2 retains the 1.0.1 system-inset compatibility fix and improves system-bar contrast: the status area uses the TourClicks dark background with light status icons, while the bottom navigation area remains light with dark controls.
 
 ## Highlights
 

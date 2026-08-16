@@ -56,13 +56,23 @@ public final class MainActivity extends Activity {
 
         getWindow().setStatusBarColor(Color.rgb(24, 29, 77));
         getWindow().setNavigationBarColor(Color.WHITE);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowInsetsControllerCompat systemBarsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        systemBarsController.setAppearanceLightStatusBars(false);
+        systemBarsController.setAppearanceLightNavigationBars(true);
 
         FrameLayout root = new FrameLayout(this);
 root.setLayoutParams(new FrameLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
         ViewGroup.LayoutParams.MATCH_PARENT));
+root.setBackgroundColor(Color.WHITE);
+
+View statusBarScrim = new View(this);
+statusBarScrim.setBackgroundColor(Color.rgb(24, 29, 77));
+FrameLayout.LayoutParams statusBarScrimParams = new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT, 0);
+root.addView(statusBarScrim, statusBarScrimParams);
 
 webView = new WebView(this);
 FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
@@ -79,6 +89,11 @@ ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
     params.rightMargin = bars.right;
     params.bottomMargin = bars.bottom;
     webView.setLayoutParams(params);
+
+    FrameLayout.LayoutParams scrimParams =
+            (FrameLayout.LayoutParams) statusBarScrim.getLayoutParams();
+    scrimParams.height = bars.top;
+    statusBarScrim.setLayoutParams(scrimParams);
     return WindowInsetsCompat.CONSUMED;
 });
 webView.setBackgroundColor(Color.rgb(246, 247, 251));
