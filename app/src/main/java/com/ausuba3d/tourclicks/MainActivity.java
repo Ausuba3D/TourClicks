@@ -36,6 +36,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -63,40 +65,40 @@ public final class MainActivity extends Activity {
         systemBarsController.setAppearanceLightNavigationBars(true);
 
         FrameLayout root = new FrameLayout(this);
-root.setLayoutParams(new FrameLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT));
-root.setBackgroundColor(Color.WHITE);
+        root.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        root.setBackgroundColor(Color.WHITE);
 
-View statusBarScrim = new View(this);
-statusBarScrim.setBackgroundColor(Color.rgb(24, 29, 77));
-FrameLayout.LayoutParams statusBarScrimParams = new FrameLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT, 0);
-root.addView(statusBarScrim, statusBarScrimParams);
+        View statusBarScrim = new View(this);
+        statusBarScrim.setBackgroundColor(Color.rgb(24, 29, 77));
+        FrameLayout.LayoutParams statusBarScrimParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0);
+        root.addView(statusBarScrim, statusBarScrimParams);
 
-webView = new WebView(this);
-FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT);
-root.addView(webView, webParams);
+        webView = new WebView(this);
+        FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        root.addView(webView, webParams);
 
-ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
-    Insets bars = windowInsets.getInsets(
-            WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-    FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) webView.getLayoutParams();
-    params.leftMargin = bars.left;
-    params.topMargin = bars.top;
-    params.rightMargin = bars.right;
-    params.bottomMargin = bars.bottom;
-    webView.setLayoutParams(params);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) webView.getLayoutParams();
+            params.leftMargin = bars.left;
+            params.topMargin = bars.top;
+            params.rightMargin = bars.right;
+            params.bottomMargin = bars.bottom;
+            webView.setLayoutParams(params);
 
-    FrameLayout.LayoutParams scrimParams =
-            (FrameLayout.LayoutParams) statusBarScrim.getLayoutParams();
-    scrimParams.height = bars.top;
-    statusBarScrim.setLayoutParams(scrimParams);
-    return WindowInsetsCompat.CONSUMED;
-});
-webView.setBackgroundColor(Color.rgb(246, 247, 251));
+            FrameLayout.LayoutParams scrimParams =
+                    (FrameLayout.LayoutParams) statusBarScrim.getLayoutParams();
+            scrimParams.height = bars.top;
+            statusBarScrim.setLayoutParams(scrimParams);
+            return WindowInsetsCompat.CONSUMED;
+        });
+        webView.setBackgroundColor(Color.rgb(246, 247, 251));
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -131,6 +133,19 @@ webView.setBackgroundColor(Color.rgb(246, 247, 251));
                 }
                 openExternal(uri);
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (url == null || !url.startsWith("file:///android_asset/index.html")) return;
+                String patch = "(function(){" +
+                        "if(!document.getElementById('tourclicks103css')){" +
+                        "var l=document.createElement('link');l.id='tourclicks103css';l.rel='stylesheet';l.href='file:///android_asset/tourclicks-1.0.3.css';document.head.appendChild(l);}" +
+                        "if(!document.getElementById('tourclicks103js')){" +
+                        "var s=document.createElement('script');s.id='tourclicks103js';s.src='file:///android_asset/tourclicks-1.0.3.js';document.body.appendChild(s);}" +
+                        "})();";
+                view.evaluateJavascript(patch, null);
             }
         });
 
@@ -214,6 +229,30 @@ webView.setBackgroundColor(Color.rgb(246, 247, 251));
         return uri;
     }
 
+    private Uri savePdfToDownloads(String requestedName, byte[] bytes) throws Exception {
+        String name = sanitizeFileName(requestedName);
+        if (!name.toLowerCase().endsWith(".pdf")) name += ".pdf";
+        ContentResolver resolver = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/TourClicks");
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        if (uri == null) throw new IllegalStateException("Could not create PDF");
+        try (OutputStream output = resolver.openOutputStream(uri, "w")) {
+            if (output == null) throw new IllegalStateException("No output stream");
+            output.write(bytes);
+            output.flush();
+        } catch (Exception error) {
+            resolver.delete(uri, null, null);
+            throw error;
+        }
+        ContentValues done = new ContentValues();
+        done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+        resolver.update(uri, done, null, null);
+        return uri;
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -302,6 +341,15 @@ webView.setBackgroundColor(Color.rgb(246, 247, 251));
         return cleaned.isEmpty() ? fallback : cleaned;
     }
 
+    private static String fileNameFromPayload(String payloadJson) {
+        try {
+            return sanitizeFileName(new JSONObject(payloadJson == null ? "{}" : payloadJson)
+                    .optString("fileName", "PS3971_TourClicks.pdf"));
+        } catch (Exception ignored) {
+            return "PS3971_TourClicks.pdf";
+        }
+    }
+
     public final class AndroidBridge {
         @JavascriptInterface
         public void saveTextFile(String requestedName, String requestedMime, String text) {
@@ -369,7 +417,38 @@ webView.setBackgroundColor(Color.rgb(246, 247, 251));
             }).start();
         }
 
+        @JavascriptInterface
+        public void save3971(String payloadJson) {
+            new Thread(() -> {
+                try {
+                    byte[] pdf = Ps3971Generator.build(MainActivity.this, payloadJson);
+                    String name = fileNameFromPayload(payloadJson);
+                    runOnUiThread(() -> startCreateDocument(name, "application/pdf", pdf));
+                } catch (Exception error) {
+                    showToast("TourClicks could not generate PS Form 3971.");
+                }
+            }).start();
+        }
 
+        @JavascriptInterface
+        public void share3971(String payloadJson) {
+            new Thread(() -> {
+                try {
+                    byte[] pdf = Ps3971Generator.build(MainActivity.this, payloadJson);
+                    String name = fileNameFromPayload(payloadJson);
+                    Uri uri = savePdfToDownloads(name, pdf);
+                    runOnUiThread(() -> {
+                        Intent share = new Intent(Intent.ACTION_SEND);
+                        share.setType("application/pdf");
+                        share.putExtra(Intent.EXTRA_STREAM, uri);
+                        share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(share, "Share PS Form 3971"));
+                    });
+                } catch (Exception error) {
+                    showToast("TourClicks could not generate or share PS Form 3971.");
+                }
+            }).start();
+        }
 
         @JavascriptInterface
         public void recognizeText(String requestId, String dataUrl) {
