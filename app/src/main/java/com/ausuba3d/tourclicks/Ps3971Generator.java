@@ -9,7 +9,6 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import android.util.Base64;
-import android.util.Base64InputStream;
 
 import org.json.JSONObject;
 
@@ -17,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 final class Ps3971Generator {
     private static final float PAGE_W = 612f;
@@ -26,11 +26,7 @@ final class Ps3971Generator {
 
     static byte[] build(Context context, String payloadJson) throws Exception {
         JSONObject data = new JSONObject(payloadJson == null ? "{}" : payloadJson);
-        Bitmap template;
-        try (InputStream raw = context.getAssets().open("ps-form-3971-template.b64");
-             InputStream input = new Base64InputStream(raw, Base64.DEFAULT)) {
-            template = BitmapFactory.decodeStream(input);
-        }
+        Bitmap template = loadTemplate(context);
         if (template == null) throw new IllegalStateException("PS Form 3971 template could not be decoded.");
 
         PdfDocument document = new PdfDocument();
@@ -45,6 +41,7 @@ final class Ps3971Generator {
         text.setColor(android.graphics.Color.BLACK);
         text.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
         text.setTextSize(6.2f);
+
         Paint small = new Paint(text);
         small.setTextSize(5.8f);
 
@@ -112,6 +109,23 @@ final class Ps3971Generator {
         document.writeTo(output);
         document.close();
         return output.toByteArray();
+    }
+
+    private static Bitmap loadTemplate(Context context) throws Exception {
+        ByteArrayOutputStream imageBytes = new ByteArrayOutputStream(60_000);
+        byte[] buffer = new byte[4096];
+        for (int i = 1; i <= 5; i++) {
+            String name = String.format(Locale.US, "ps3971-template-%02d.b64", i);
+            ByteArrayOutputStream encoded = new ByteArrayOutputStream(15_000);
+            try (InputStream raw = context.getAssets().open(name)) {
+                int read;
+                while ((read = raw.read(buffer)) != -1) encoded.write(buffer, 0, read);
+            }
+            byte[] decoded = Base64.decode(encoded.toByteArray(), Base64.DEFAULT);
+            imageBytes.write(decoded);
+        }
+        byte[] image = imageBytes.toByteArray();
+        return BitmapFactory.decodeByteArray(image, 0, image.length);
     }
 
     private static void drawField(Canvas canvas, Paint paint, float x, float rectBottom, String value) {
