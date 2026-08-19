@@ -1,10 +1,14 @@
 from pathlib import Path
+import base64
 import struct
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'app/build.gradle'
 MANIFEST = ROOT / 'app/src/main/AndroidManifest.xml'
 HTML = ROOT / 'app/src/main/assets/index.html'
+PATCH_JS = ROOT / 'app/src/main/assets/tourclicks-1.0.3.js'
+PATCH_CSS = ROOT / 'app/src/main/assets/tourclicks-1.0.3.css'
+FORM_TEMPLATES = [ROOT / f'app/src/main/assets/ps3971-template-{i:02d}.b64' for i in range(1, 6)]
 ICON = ROOT / 'brand/tourclicks-icon.png'
 
 for path in ROOT.rglob('*'):
@@ -18,8 +22,10 @@ build = BUILD.read_text(encoding='utf-8')
 for marker in [
     "namespace 'com.ausuba3d.tourclicks'",
     "applicationId 'com.ausuba3d.tourclicks'",
-    'versionCode 3',
-    "versionName '1.0.2'",
+    'versionCode 4',
+    "versionName '1.0.3'",
+    'minifyEnabled true',
+    'shrinkResources true',
 ]:
     if marker not in build:
         raise SystemExit(f'Missing Android release marker: {marker}')
@@ -52,6 +58,22 @@ for marker in [
     if marker not in html:
         raise SystemExit(f'Missing final UI/release marker: {marker}')
 
+for required in (PATCH_JS, PATCH_CSS, *FORM_TEMPLATES):
+    if not required.is_file() or required.stat().st_size == 0:
+        raise SystemExit(f'Missing TourClicks 1.0.3 asset: {required.relative_to(ROOT)}')
+
+patch = PATCH_JS.read_text(encoding='utf-8')
+for marker in [
+    'Partial-day leave interval',
+    'At-a-glance time composition',
+    'tc-six-hour-marker',
+    'PS Form 3971 preview',
+    'PS3971_',
+    'Total leave',
+]:
+    if marker not in patch:
+        raise SystemExit(f'Missing TourClicks 1.0.3 feature marker: {marker}')
+
 for forbidden in [
     'https://github.com/Ausuba3D/Janus',
     'Janus Timebook Dev',
@@ -77,6 +99,17 @@ width, height = struct.unpack('>II', raw[16:24])
 if (width, height) != (192, 192):
     raise SystemExit(f'Unexpected TourClicks icon size: {width}x{height}')
 
-print('TourClicks 1.0.2 public release source verification passed.')
+form_b64 = ''.join(path.read_text(encoding='ascii').strip() for path in FORM_TEMPLATES)
+if len(form_b64) < 60000:
+    raise SystemExit('PS Form 3971 template payload is unexpectedly small')
+try:
+    form_raw = base64.b64decode(form_b64, validate=True)
+except Exception as exc:
+    raise SystemExit(f'PS Form 3971 template payload is not valid base64: {exc}')
+if len(form_raw) < 45000 or form_raw[:4] != b'RIFF' or form_raw[8:12] != b'WEBP':
+    raise SystemExit('PS Form 3971 template is not the expected WebP payload')
+
+print('TourClicks 1.0.3 public release source verification passed.')
 print(f'Icon: {width}x{height}')
+print(f'3971 template: {len(form_raw)} decoded bytes across {len(FORM_TEMPLATES)} chunks')
 print('Package: com.ausuba3d.tourclicks')
