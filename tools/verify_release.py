@@ -8,7 +8,16 @@ MANIFEST = ROOT / 'app/src/main/AndroidManifest.xml'
 HTML = ROOT / 'app/src/main/assets/index.html'
 PATCH_JS = ROOT / 'app/src/main/assets/tourclicks-1.0.3.js'
 PATCH_CSS = ROOT / 'app/src/main/assets/tourclicks-1.0.3.css'
-FORM_TEMPLATES = [ROOT / f'app/src/main/assets/ps3971-template-{i:02d}.b64' for i in range(1, 6)]
+FORM_TEMPLATES = [
+    ROOT / 'app/src/main/assets/ps3971-template-01.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-02.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-03.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-04.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-05a.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-05b.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-05c.b64',
+    ROOT / 'app/src/main/assets/ps3971-template-06.b64',
+]
 ICON = ROOT / 'brand/tourclicks-icon.png'
 
 for path in ROOT.rglob('*'):
