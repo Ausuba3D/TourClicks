@@ -16,11 +16,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 final class Ps3971Generator {
     private static final float PAGE_W = 612f;
     private static final float PAGE_H = 792f;
+    private static final String[] TEMPLATE_SEGMENTS = {
+            "ps3971-template-01.b64",
+            "ps3971-template-02.b64",
+            "ps3971-template-03.b64",
+            "ps3971-template-04.b64",
+            "ps3971-template-05a.b64",
+            "ps3971-template-05b.b64",
+            "ps3971-template-05c.b64",
+            "ps3971-template-06.b64"
+    };
 
     private Ps3971Generator() {}
 
@@ -114,8 +123,7 @@ final class Ps3971Generator {
     private static Bitmap loadTemplate(Context context) throws Exception {
         ByteArrayOutputStream imageBytes = new ByteArrayOutputStream(60_000);
         byte[] buffer = new byte[4096];
-        for (int i = 1; i <= 5; i++) {
-            String name = String.format(Locale.US, "ps3971-template-%02d.b64", i);
+        for (String name : TEMPLATE_SEGMENTS) {
             ByteArrayOutputStream encoded = new ByteArrayOutputStream(15_000);
             try (InputStream raw = context.getAssets().open(name)) {
                 int read;
@@ -151,11 +159,15 @@ final class Ps3971Generator {
         while (index < words.length && result.size() < maxLines) {
             String candidate = line.length() == 0 ? words[index] : line + " " + words[index];
             if (paint.measureText(candidate) <= maxWidth) {
-                line.setLength(0); line.append(candidate); index++;
+                line.setLength(0);
+                line.append(candidate);
+                index++;
             } else if (line.length() > 0) {
-                result.add(line.toString()); line.setLength(0);
+                result.add(line.toString());
+                line.setLength(0);
             } else {
-                result.add(trimToWidth(paint, words[index], maxWidth)); index++;
+                result.add(trimToWidth(paint, words[index], maxWidth));
+                index++;
             }
         }
         if (line.length() > 0 && result.size() < maxLines) result.add(line.toString());
