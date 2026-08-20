@@ -48,24 +48,63 @@ jobs:
           if [ ! -f "$APK" ]; then APK=app/build/outputs/apk/release/app-release.apk; fi
           test -f "$APK"
           mkdir -p dist
-          cp "$APK" dist/TourClicks-1.0.2-unsigned.apk
+          cp "$APK" dist/TourClicks-1.0.3-unsigned.apk
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee dist/APK-METADATA.txt
-          grep -q "package: name='com.ausuba3d.tourclicks' versionCode='3' versionName='1.0.2'" dist/APK-METADATA.txt
+          grep -q "package: name='com.ausuba3d.tourclicks' versionCode='4' versionName='1.0.3'" dist/APK-METADATA.txt
           grep -q "application-label:'TourClicks'" dist/APK-METADATA.txt
           unzip -p "$APK" assets/index.html | grep -q '<h1>TourClicks</h1>'
           unzip -p "$APK" assets/index.html | grep -q 'Small clock variance'
           unzip -p "$APK" assets/index.html | grep -q 'Personal offset ET'
-          unzip -p "$APK" assets/index.html | grep -q 'TourClicks Timeline date selector contrast and direct date picker'
           unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/TourClicks'
+          unzip -l "$APK" | grep -q 'assets/tourclicks-1.0.3.js'
+          unzip -l "$APK" | grep -q 'assets/tourclicks-1.0.3.css'
+          unzip -l "$APK" | grep -q 'assets/ps3971-template-01.b64'
+          unzip -l "$APK" | grep -q 'assets/ps3971-template-05a.b64'
+          unzip -l "$APK" | grep -q 'assets/ps3971-template-05c.b64'
+          unzip -l "$APK" | grep -q 'assets/ps3971-template-06.b64'
+          unzip -p "$APK" assets/tourclicks-1.0.3.js | grep -q 'Partial-day leave interval'
+          unzip -p "$APK" assets/tourclicks-1.0.3.js | grep -q 'PS Form 3971 preview'
           ! unzip -p "$APK" assets/index.html | grep -q 'https://github.com/Ausuba3D/Janus'
-          sha256sum dist/TourClicks-1.0.2-unsigned.apk | tee dist/SHA256SUMS.txt
+          stat -c 'APK_SIZE_BYTES=%s' "$APK" | tee dist/APK-SIZE.txt
+          sha256sum dist/TourClicks-1.0.3-unsigned.apk | tee dist/SHA256SUMS.txt
 
       - name: Upload verified unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: tourclicks-1.0.2-unsigned
+          name: tourclicks-1.0.3-unsigned
           path: |
-            dist/TourClicks-1.0.2-unsigned.apk
+            dist/TourClicks-1.0.3-unsigned.apk
             dist/APK-METADATA.txt
+            dist/APK-SIZE.txt
             dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Compile installable debug test APK
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Verify installable debug test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          cp "$APK" dist/TourClicks-1.0.3-test.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee dist/TEST-APK-METADATA.txt
+          grep -q "package: name='com.ausuba3d.tourclicks.debug' versionCode='4' versionName='1.0.3-debug'" dist/TEST-APK-METADATA.txt
+          grep -q "application-label:'TourClicks'" dist/TEST-APK-METADATA.txt
+          unzip -l "$APK" | grep -q 'assets/tourclicks-1.0.3.js'
+          unzip -p "$APK" assets/tourclicks-1.0.3.js | grep -q 'Partial-day leave interval'
+          unzip -p "$APK" assets/tourclicks-1.0.3.js | grep -q 'PS Form 3971 preview'
+          stat -c 'TEST_APK_SIZE_BYTES=%s' "$APK" | tee dist/TEST-APK-SIZE.txt
+          sha256sum dist/TourClicks-1.0.3-test.apk | tee dist/TEST-SHA256SUMS.txt
+
+      - name: Upload installable 1.0.3 test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourclicks-1.0.3-test-installable
+          path: |
+            dist/TourClicks-1.0.3-test.apk
+            dist/TEST-APK-METADATA.txt
+            dist/TEST-APK-SIZE.txt
+            dist/TEST-SHA256SUMS.txt
           if-no-files-found: error
